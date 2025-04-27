@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Quiz App</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --correct-color: #4caf50;
+            --wrong-color: #f44336;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .app-info {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .quiz-container {
+            padding: 30px;
+        }
+
+        .start-screen, .result-screen {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .start-screen h2, .result-screen h2 {
+            margin-bottom: 20px;
+            color: var(--dark-color);
+        }
+
+        .start-screen p, .result-screen p {
+            margin-bottom: 30px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .quiz-screen {
+            display: none;
+        }
+
+        .question-container {
+            margin-bottom: 20px;
+        }
+
+        .question {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: var(--dark-color);
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .options-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option {
+            background-color: var(--light-color);
+            border: 2px solid #e9e9e9;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .option:hover {
+            background-color: #e9e9e9;
+        }
+
+        .option.selected {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .option.correct {
+            background-color: var(--correct-color);
+            color: white;
+            border-color: var(--correct-color);
+        }
+
+        .option.wrong {
+            background-color: var(--wrong-color);
+            color: white;
+            border-color: var(--wrong-color);
+        }
+
+        .quiz-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .quiz-footer .question-count {
+            font-size: 16px;
+            color: #555;
+        }
+
+        .result-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .score-container {
+            background-color: var(--light-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .score-container h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: var(--dark-color);
+        }
+
+        .score {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .score-percentage {
+            font-size: 20px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            height: 12px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.5s ease;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .timer-container {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .timer {
+            font-size: 18px;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+        }
+
+        .timer i {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+
+        .hide {
+            display: none;
+        }
+
+        .feedback {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .feedback.correct {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: var(--correct-color);
+        }
+
+        .feedback.wrong {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: var(--wrong-color);
+        }
+
+        .quiz-summary {
+            margin-top: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-question {
+            flex: 2;
+            text-align: left;
+        }
+
+        .summary-result {
+            flex: 1;
+            text-align: right;
+        }
+
+        .correct-text {
+            color: var(--correct-color);
+        }
+
+        .wrong-text {
+            color: var(--wrong-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Interactive Quiz App</h1>
+            <p class="app-info">Test your knowledge with our quiz!</p>
+        </header>
+
+        <div class="quiz-container">
+            <!-- Start Screen -->
+            <div class="start-screen" id="start-screen">
+                <h2>Welcome to the Quiz!</h2>
+                <p>This quiz contains multiple-choice questions. Select the correct answer and test your knowledge. Good luck!</p>
+                <p>
+                    <strong>Rules:</strong><br>
+                    - You have 30 seconds per question<br>
+                    - Once you select an answer, you cannot change it<br>
+                    - You cannot skip questions<br>
+                    - You'll get points based on your correct answers
+                </p>
+                <button class="btn" id="start-btn">Start Quiz</button>
+                <div class="category-select" style="margin-top: 20px;">
+                    <label for="category">Select Category:</label>
+                    <select id="category" style="padding: 10px; border-radius: 5px; border: 1px solid #ddd; margin-left: 10px;">
+                        <option value="general">General Knowledge</option>
+                        <option value="science">Science</option>
+                        <option value="history">History</option>
+                        <option value="geography">Geography</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Quiz Screen -->
+            <div class="quiz-screen" id="quiz-screen">
+                <div class="timer-container">
+                    <div class="timer">
+                        <span>Time: </span>
+                        <span id="timer-value">30</span>
+                        <span> seconds</span>
+                    </div>
+                </div>
+
+                <div class="question-container">
+                    <h2 class="question" id="question"></h2>
+                    <div class="options-container" id="options-container">
+                        <!-- Options will be inserted here dynamically -->
+                    </div>
+                    <div class="feedback hide" id="feedback"></div>
+                </div>
+
+                <div class="quiz-footer">
+                    <div class="question-count">
+                        <span id="current-question">1</span> of <span id="total-questions">10</span> Questions
+                    </div>
+                    <button class="btn" id="next-btn">Next Question</button>
+                </div>
+            </div>
+
+            <!-- Result Screen -->
+            <div class="result-screen" id="result-screen">
+                <h2>Quiz Completed!</h2>
+                <div class="score-container">
+                    <h3>Your Score</h3>
+                    <div class="score" id="score">0</div>
+                    <div class="score-percentage" id="score-percentage">0%</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+                </div>
+
+                <div class="quiz-summary" id="quiz-summary">
+                    <!-- Summary will be inserted here dynamically -->
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn" id="restart-btn">Restart Quiz</button>
+                    <button class="btn" id="home-btn">Go to Home</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Quiz Questions Database
+        const quizQuestions = {
+            general: [
+                {
+                    question: "What is the capital of France?",
+                    options: ["Berlin", "Madrid", "Paris", "Rome"],
+                    correctAnswer: "Paris"
+                },
+                {
+                    question: "Which planet is known as the Red Planet?",
+                    options: ["Earth", "Mars", "Jupiter", "Venus"],
+                    correctAnswer: "Mars"
+                },
+                {
+                    question: "What is the largest ocean on Earth?",
+                    options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+                    correctAnswer: "Pacific Ocean"
+                },
+                {
+                    question: "Who painted the Mona Lisa?",
+                    options: ["Pablo Picasso", "Vincent van Gogh", "Leonardo da Vinci", "Michelangelo"],
+                    correctAnswer: "Leonardo da Vinci"
+                },
+                {
+                    question: "Which element has the chemical symbol 'O'?",
+                    options: ["Gold", "Oxygen", "Osmium", "Oganesson"],
+                    correctAnswer: "Oxygen"
+                },
+                {
+                    question: "What is the largest mammal in the world?",
+                    options: ["African Elephant", "Blue Whale", "Giraffe", "Polar Bear"],
+                    correctAnswer: "Blue Whale"
+                },
+                {
+                    question: "In which year did World War II end?",
+                    options: ["1943", "1945", "1947", "1950"],
+                    correctAnswer: "1945"
+                },
+                {
+                    question: "Which country is known as the Land of the Rising Sun?",
+                    options: ["China", "Thailand", "South Korea", "Japan"],
+                    correctAnswer: "Japan"
+                },
+                {
+                    question: "What is the hardest natural substance on Earth?",
+                    options: ["Gold", "Platinum", "Diamond", "Titanium"],
+                    correctAnswer: "Diamond"
+                },
+                {
+                    question: "Who wrote 'Romeo and Juliet'?",
+                    options: ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+                    correctAnswer: "William Shakespeare"
+                }
+            ],
+            science: [
+                {
+                    question: "What is the chemical symbol for gold?",
+                    options: ["Go", "Gl", "Au", "Ag"],
+                    correctAnswer: "Au"
+                },
+                {
+                    question: "What is the smallest unit of matter?",
+                    options: ["Atom", "Molecule", "Cell", "Electron"],
+                    correctAnswer: "Atom"
+                },
+                {
+                    question: "Which gas do plants absorb from the atmosphere?",
+                    options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"],
+                    correctAnswer: "Carbon Dioxide"
+                },
+                {
+                    question: "What is the speed of light in vacuum?",
+                    options: ["300,000 km/s", "150,000 km/s", "200,000 km/s", "250,000 km/s"],
+                    correctAnswer: "300,000 km/s"
+                },
+                {
+                    question: "What is the process by which plants make their food called?",
+                    options: ["Photosynthesis", "Respiration", "Digestion", "Absorption"],
+                    correctAnswer: "Photosynthesis"
+                },
+                {
+                    question: "What is the SI unit of force?",
+                    options: ["Watt", "Joule", "Newton", "Pascal"],
+                    correctAnswer: "Newton"
+                },
+                {
+                    question: "Which planet has the most moons?",
+                    options: ["Jupiter", "Saturn", "Uranus", "Neptune"],
+                    correctAnswer: "Saturn"
+                },
+                {
+                    question: "What is the human body's largest organ?",
+                    options: ["Heart", "Liver", "Brain", "Skin"],
+                    correctAnswer: "Skin"
+                },
+                {
+                    question: "What is the chemical formula for water?",
+                    options: ["H2O2", "CO2", "H2O", "CH4"],
+                    correctAnswer: "H2O"
+                },
+                {
+                    question: "Which element has the atomic number 1?",
+                    options: ["Oxygen", "Carbon", "Helium", "Hydrogen"],
+                    correctAnswer: "Hydrogen"
+                }
+            ],
+            history: [
+                {
+                    question: "Who was the first President of the United States?",
+                    options: ["Thomas Jefferson", "John Adams", "George Washington", "Benjamin Franklin"],
+                    correctAnswer: "George Washington"
+                },
+                {
+                    question: "In which year did Christopher Columbus discover America?",
+                    options: ["1492", "1500", "1510", "1468"],
+                    correctAnswer: "1492"
+                },
+                {
+                    question: "Who was the first woman to win a Nobel Prize?",
+                    options: ["Mother Teresa", "Marie Curie", "Rosa Parks", "Florence Nightingale"],
+                    correctAnswer: "Marie Curie"
+                },
+                {
+                    question: "Which ancient civilization built the pyramids?",
+                    options: ["Greeks", "Romans", "Egyptians", "Mayans"],
+                    correctAnswer: "Egyptians"
+                },
+                {
+                    question: "When did World War I begin?",
+                    options: ["1914", "1916", "1918", "1920"],
+                    correctAnswer: "1914"
+                },
+                {
+                    question: "Who was the leader of the Soviet Union during World War II?",
+                    options: ["Vladimir Lenin", "Joseph Stalin", "Leon Trotsky", "Nikita Khrushchev"],
+                    correctAnswer: "Joseph Stalin"
+                },
+                {
+                    question: "In which year did the Berlin Wall fall?",
+                    options: ["1987", "1989", "1991", "1993"],
+                    correctAnswer: "1989"
+                },
+                {
+                    question: "Who wrote the 'I Have a Dream' speech?",
+                    options: ["Malcolm X", "Martin Luther King Jr.", "Barack Obama", "Nelson Mandela"],
+                    correctAnswer: "Martin Luther King Jr."
+                },
+                {
+                    question: "Which empire was ruled by Genghis Khan?",
+                    options: ["Roman Empire", "Ottoman Empire", "Mongol Empire", "Byzantine Empire"],
+                    correctAnswer: "Mongol Empire"
+                },
+                {
+                    question: "When was the Declaration of Independence signed?",
+                    options: ["1772", "1774", "1776", "1778"],
+                    correctAnswer: "1776"
+                }
+            ],
+            geography: [
+                {
+                    question: "What is the largest continent by land area?",
+                    options: ["Africa", "North America", "Europe", "Asia"],
+                    correctAnswer: "Asia"
+                },
+                {
+                    question: "Which is the longest river in the world?",
+                    options: ["Amazon", "Nile", "Yangtze", "Mississippi"],
+                    correctAnswer: "Nile"
+                },
+                {
+                    question: "What is the tallest mountain in the world?",
+                    options: ["K2", "Kangchenjunga", "Mount Everest", "Lhotse"],
+                    correctAnswer: "Mount Everest"
+                },
+                {
+                    question: "Which country has the largest population?",
+                    options: ["India", "United States", "China", "Indonesia"],
+                    correctAnswer: "China"
+                },
+                {
+                    question: "What is the capital of Australia?",
+                    options: ["Sydney", "Melbourne", "Canberra", "Perth"],
+                    correctAnswer: "Canberra"
+                },
+                {
+                    question: "Which desert is the largest in the world?",
+                    options: ["Gobi Desert", "Kalahari Desert", "Sahara Desert", "Antarctic Desert"],
+                    correctAnswer: "Antarctic Desert"
+                },
+                {
+                    question: "Which of these countries is not in Europe?",
+                    options: ["Portugal", "Turkey", "Sweden", "Morocco"],
+                    correctAnswer: "Morocco"
+                },
+                {
+                    question: "What is the smallest country in the world?",
+                    options: ["Monaco", "Malta", "Vatican City", "San Marino"],
+                    correctAnswer: "Vatican City"
+                },
+                {
+                    question: "Which ocean is the deepest?",
+                    options: ["Atlantic Ocean", "Indian Ocean", "Southern Ocean", "Pacific Ocean"],
+                    correctAnswer: "Pacific Ocean"
+                },
+                {
+                    question: "Which country is known as the Land of Fire and Ice?",
+                    options: ["Norway", "Greenland", "Iceland", "Finland"],
+                    correctAnswer: "Iceland"
+                }
+            ]
+        };
+
+        // Global Variables
+        let currentQuestion = 0;
+        let score = 0;
+        let quizCategory = "general";
+        let questions = [];
+        let timerInterval;
+        let answerSelected = false;
+        let quizSummary = [];
+
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionElement = document.getElementById('question');
+        const optionsContainer = document.getElementById('options-container');
+        const currentQuestionElement = document.getElementById('current-question');
+        const totalQuestionsElement = document.getElementById('total-questions');
+        const nextButton = document.getElementById('next-btn');
+        const startButton = document.getElementById('start-btn');
+        const restartButton = document.getElementById('restart-btn');
+        const homeButton = document.getElementById('home-btn');
+        const scoreElement = document.getElementById('score');
+        const scorePercentageElement = document.getElementById('score-percentage');
+        const progressBar = document.getElementById('progress-bar');
+        const quizSummaryElement = document.getElementById('quiz-summary');
+        const categorySelect = document.getElementById('category');
+        const timerElement = document.getElementById('timer-value');
+        const feedbackElement = document.getElementById('feedback');
+
+        // Initialize the quiz
+        function initQuiz() {
+            // Get selected category
+            quizCategory = categorySelect.value;
+
+            // Set questions from the selected category
+            questions = [...quizQuestions[quizCategory]];
+
+            // Shuffle questions
+            questions = shuffleArray(questions);
+
+            // Reset variables
+            currentQuestion = 0;
+            score = 0;
+            quizSummary = [];
+
+            // Update UI
+            startScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            resultScreen.style.display = 'none';
+
+            totalQuestionsElement.textContent = questions.length;
+
+            // Load first question
+            loadQuestion();
+        }
+
+        // Load question and options
+        function loadQuestion() {
+            // Clear timer and reset
+            clearInterval(timerInterval);
+            resetTimer();
+
+            // Reset answer selection state
+            answerSelected = false;
+
+            // Hide feedback
+            feedbackElement.classList.add('hide');
+
+            // Hide next button until answer is selected
+            nextButton.style.display = 'none';
+
+            // Update current question number
+            currentQuestionElement.textContent = currentQuestion + 1;
+
+            // Load question
+            questionElement.textContent = questions[currentQuestion].question;
+
+            // Clear previous options
+            optionsContainer.innerHTML = '';
+
+            // Load options
+            questions[currentQuestion].options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.classList.add('option');
+                optionElement.textContent = option;
+                optionElement.dataset.option = option;
+
+                // Add click event listener
+                optionElement.addEventListener('click', () => selectOption(optionElement));
+
+                optionsContainer.appendChild(optionElement);
+            });
+
+            // Start timer
+            startTimer();
+        }
+
+        // Select option
+        function selectOption(selectedOption) {
+            // Prevent selection if already answered
+            if (answerSelected) return;
+
+            // Stop timer
+            clearInterval(timerInterval);
+
+            // Mark as answered
+            answerSelected = true;
+
+            const correctAnswer = questions[currentQuestion].correctAnswer;
+            const selectedAnswer = selectedOption.dataset.option;
+            let isCorrect = false;
+
+            // Check if answer is correct
+            if (selectedAnswer === correctAnswer) {
+                selectedOption.classList.add('correct');
+                score++;
+                isCorrect = true;
+                feedbackElement.textContent = "Correct! Well done!";
+                feedbackElement.classList.add('correct');
+                feedbackElement.classList.remove('hide', 'wrong');
+            } else {
+                selectedOption.classList.add('wrong');
+
+                // Highlight the correct answer
+                const options = optionsContainer.querySelectorAll('.option');
+                options.forEach(option => {
+                    if (option.dataset.option === correctAnswer) {
+                        option.classList.add('correct');
+                    }
+                });
+
+                feedbackElement.textContent = `Wrong! The correct answer is: ${correctAnswer}`;
+                feedbackElement.classList.add('wrong');
+                feedbackElement.classList.remove('hide', 'correct');
+            }
+
+            // Add to quiz summary
+            quizSummary.push({
+                question: questions[currentQuestion].question,
+                userAnswer: selectedAnswer,
+                correctAnswer: correctAnswer,
+                isCorrect: isCorrect
+            });
+
+            // Disable all options
+            const options = optionsContainer.querySelectorAll('.option');
+            options.forEach(option => {
+                option.style.pointerEvents = 'none';
+            });
+
+            // Show next button
+            nextButton.style.display = 'block';
+        }
+
+        // Go to next question or end quiz
+        function nextQuestion() {
+            currentQuestion++;
+
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                endQuiz();
+            }
+        }
+
+        // End the quiz and show results
+        function endQuiz() {
+            quizScreen.style.display = 'none';
+            resultScreen.style.display = 'block';
+
+            // Calculate percentage
+            const percentage = (score / questions.length) * 100;
+
+            // Update score display
+            scoreElement.textContent = `${score}/${questions.length}`;
+            scorePercentageElement.textContent = `${percentage.toFixed(2)}%`;
+
+            // Update progress bar
+            progressBar.style.width = `${percentage}%`;
+
+            // Create summary
+            quizSummaryElement.innerHTML = '';
+            quizSummary.forEach((item, index) => {
+                const summaryItem = document.createElement('div');
+                summaryItem.classList.add('summary-item');
+
+                const questionNumber = document.createElement('div');
+                questionNumber.textContent = `Q${index + 1}:`;
+                questionNumber.style.marginRight = '10px';
+
+                const questionText = document.createElement('div');
+                questionText.classList.add('summary-question');
+                questionText.textContent = item.question;
+
+                const resultText = document.createElement('div');
+                resultText.classList.add('summary-result');
+
+                if (item.isCorrect) {
+                    resultText.textContent = '✓';
+                    resultText.classList.add('correct-text');
+                } else {
+                    resultText.textContent = '✗';
+                    resultText.classList.add('wrong-text');
+                }
+
+                summaryItem.appendChild(questionNumber);
+                summaryItem.appendChild(questionText);
+                summaryItem.appendChild(resultText);
+                quizSummaryElement.appendChild(summaryItem);
+            });
+        }
+
+        // Timer functions
+        function startTimer() {
+            let timeLeft = 30;
+            timerElement.textContent = timeLeft;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+
+                // Change color when time is running out
+                if (timeLeft <= 10) {
+                    timerElement.style.color = '#f44336';
+                } else {
+                    timerElement.style.color = 'var(--dark-color)';
+                }
+
+                // Time's up
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timeUp();
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            timerElement.textContent = '30';
+            timerElement.style.color = 'var(--dark-color)';
+        }
+
+        function timeUp() {
+            // Auto-select wrong answer if no answer selected
+            if (!answerSelected) {
+                feedbackElement.textContent = "Time's up! You didn't select an answer.";
+                feedbackElement.classList.add('wrong');
+                feedbackElement.classList.remove('hide', 'correct');
+
+                // Highlight the correct answer
+                const options = optionsContainer.querySelectorAll('.option');
+                const correctAnswer = questions[currentQuestion].correctAnswer;
+
+                options.forEach(option => {
+                    if (option.dataset.option === correctAnswer) {
+                        option.classList.add('correct');
+                    }
+                    option.style.pointerEvents = 'none';
+                });
+
+                // Add to quiz summary
+                quizSummary.push({
+                    question: questions[currentQuestion].question,
+                    userAnswer: "No answer",
+                    correctAnswer: correctAnswer,
+                    isCorrect: false
+                });
+
+                // Mark as answered
+                answerSelected = true;
+
+                // Show next button
+                nextButton.style.display = 'block';
+            }
+        }
+
+        // Utility function to shuffle array
+        function shuffleArray(array) {
+            const shuffledArray = [...array];
+            for (let i = shuffledArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+            }
+            return shuffledArray;
+        }
+
+        // Event Listeners
+        startButton.addEventListener('click', initQuiz);
+        nextButton.addEventListener('click', nextQuestion);
+        restartButton.addEventListener('click', () => {
+            resultScreen.style.display = 'none';
+            initQuiz();
+        });
+        homeButton.addEventListener('click', () => {
+            resultScreen.style.display = 'none';
+            startScreen.style.display = 'block';
+        });
+    </script>
+</body>
+</html>
